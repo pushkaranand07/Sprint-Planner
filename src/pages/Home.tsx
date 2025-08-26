@@ -224,6 +224,7 @@ export default function Home() {
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const [isSelectingSprint, setIsSelectingSprint] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = pendingTasks.filter(task => {
@@ -361,6 +362,8 @@ export default function Home() {
 
   const handleSubmitChanges = () => {
     setHasPendingChanges(false);
+    setSaveMessage('Changes saved successfully!');
+    setTimeout(() => setSaveMessage(null), 3000);
   };
 
   const handleAddTask = (taskData: TaskFormData) => {
@@ -461,7 +464,7 @@ export default function Home() {
         <div className="flex flex-col items-center justify-center h-full p-8 space-y-4">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Select Sprint Duration</h3>
           <div className="space-y-4 w-full max-w-md">
-            {sprintOptions.map((option, index) => (
+            {sprintOptions.map((option) => (
               <button
                 key={option.id}
                 onClick={() => {
@@ -529,13 +532,19 @@ export default function Home() {
             <button
               onClick={() => setShowAddTask(true)}
               className="inline-flex items-center px-6 py-3 bg-white bg-opacity-20 backdrop-blur-sm border border-white text-white text-base font-semibold rounded-2xl hover:bg-opacity-30 transition-all duration-500 shadow-xl"
-            >
+              >
               <Plus className="w-5 h-5 mr-2" />
               Add Task
             </button>
           </div>
         </div>
       </div>
+
+      {saveMessage && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          {saveMessage}
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="p-8">
