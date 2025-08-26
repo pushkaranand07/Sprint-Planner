@@ -363,7 +363,7 @@ export default function Home() {
   const handleSubmitChanges = () => {
     setHasPendingChanges(false);
     setSaveMessage('Changes saved successfully!');
-    setTimeout(() => setSaveMessage(null), 3000);
+    setTimeout(() => setSaveMessage(null), 1000);
   };
 
   const handleAddTask = (taskData: TaskFormData) => {
