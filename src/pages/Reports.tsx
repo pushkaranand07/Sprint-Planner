@@ -36,6 +36,9 @@ export default function Reports() {
   const [tasks] = useState<Task[]>(mockData.tasks);
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter'>('week');
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPriority, setSelectedPriority] = useState<string | null>(null);
 
   const analytics = useMemo(() => {
     const totalTasks = tasks.length;
@@ -85,6 +88,36 @@ export default function Reports() {
       assigneeStats,
     };
   }, [tasks, timeframe]);
+
+  const handleStatusClick = (status: string) => {
+    setSelectedStatus(status);
+    setIsModalOpen(true);
+  };
+
+  const handlePriorityClick = (priority: string) => {
+    setSelectedPriority(priority);
+    setSelectedStatus(null);
+    setIsModalOpen(true);
+  };
+
+  const filteredTasks = useMemo(() => {
+    if (selectedStatus) {
+      let statusKey = '';
+      if (selectedStatus === 'Completed') statusKey = 'done';
+      else if (selectedStatus === 'In Progress') statusKey = 'in-progress';
+      else if (selectedStatus === 'Blocked') statusKey = 'blocked';
+      else if (selectedStatus === 'Overdue') {
+        return tasks.filter(
+          task => task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done'
+        );
+      }
+      return tasks.filter(task => task.status === statusKey);
+    }
+    if (selectedPriority) {
+      return tasks.filter(task => task.priority === selectedPriority.toLowerCase());
+    }
+    return [];
+  }, [selectedStatus, selectedPriority, tasks]);
 
   const StatCard = ({ 
     title, 
@@ -293,7 +326,8 @@ export default function Reports() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-shadow backdrop-blur-sm"
+                    className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-shadow backdrop-blur-sm cursor-pointer"
+                    onClick={() => handleStatusClick(item.status)}
                   >
                     <div className="flex items-center">
                       <div className={`w-3 h-3 ${item.color} rounded-full mr-3 shadow-sm`}></div>
@@ -333,7 +367,8 @@ export default function Reports() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-shadow backdrop-blur-sm"
+                      className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-shadow backdrop-blur-sm cursor-pointer"
+                      onClick={() => handlePriorityClick(priority.charAt(0).toUpperCase() + priority.slice(1))}
                     >
                       <div className="flex items-center">
                         <div className={`w-3 h-3 ${colors[priority as keyof typeof colors]} rounded-full mr-3 shadow-sm`}></div>
@@ -434,6 +469,57 @@ export default function Reports() {
           </div>
         </motion.div>
       </motion.div>
+
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            onClick={() => setIsModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 40 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 40 }}
+              className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-bold mb-4">
+                {selectedStatus
+                  ? `${selectedStatus} Tasks`
+                  : selectedPriority
+                    ? `${selectedPriority} Priority Tasks`
+                    : 'Tasks'}
+              </h2>
+              <button
+                className="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-xl"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setSelectedStatus(null);
+                  setSelectedPriority(null);
+                }}
+              >
+                ×
+              </button>
+              <ul className="space-y-3 max-h-80 overflow-y-auto">
+                {filteredTasks.length === 0 && (
+                  <li className="text-gray-500 text-sm">No tasks found.</li>
+                )}
+                {filteredTasks.map(task => (
+                  <li key={task.id} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                    <div className="font-medium">{task.title}</div>
+                    <div className="text-xs text-gray-500">
+                      Assignee: {task.assignee} | Due: {task.dueDate}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
